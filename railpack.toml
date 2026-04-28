@@ -1,0 +1,7 @@
+[providers.php]
+
+[processes.web]
+cmd = "caddy run --config /app/Caddyfile"
+
+[processes.phpfpm]
+cmd = "php-fpm -F -R"
