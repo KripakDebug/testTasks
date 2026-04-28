@@ -156,12 +156,18 @@
 
 				const formData = new FormData(form);
 
-				fetch("send.php", {
+				fetch("./send.php", {
 					method: "POST",
 					body: formData,
 				})
-					.then((res) => res.json())
+					.then((res) => {
+						console.log(res);
+						
+						return res.json()
+					})
 					.then((data) => {
+						console.log(data);
+						
 						if (data.success) {
 							form.style.display = "none";
 							window.location.href = "thank-you.html";
