@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="uk">
+	<head>
+		<meta charset="UTF-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+		<title>Lead Form</title>
+		<style>
+			body {
+				font-family: Arial, sans-serif;
+				background: #f5f5f5;
+				display: flex;
+				justify-content: center;
+				align-items: center;
+				height: 100vh;
+				margin: 0;
+			}
+
+			.form-container {
+				width: 100%;
+				max-width: 400px;
+				padding: 20px;
+			}
+
+			input {
+				width: 100%;
+				padding: 14px;
+				margin-bottom: 12px;
+				border-radius: 10px;
+				border: 1px solid #ddd;
+				font-size: 16px;
+				box-sizing: border-box;
+			}
+
+			input.error {
+				border-color: red;
+			}
+
+			.error-message {
+				color: red;
+				font-size: 12px;
+				margin-top: -8px;
+				margin-bottom: 10px;
+			}
+
+			button {
+				width: 100%;
+				padding: 16px;
+				border: none;
+				border-radius: 10px;
+				background: #888;
+				color: #fff;
+				font-size: 18px;
+				font-weight: bold;
+				cursor: pointer;
+			}
+
+			button:hover {
+				background: #666;
+			}
+
+			.success {
+				text-align: center;
+				color: green;
+				font-size: 18px;
+			}
+
+			@media (max-width: 480px) {
+				body {
+					padding: 10px;
+				}
+			}
+		</style>
+	</head>
+	<body>
+		<div class="form-container">
+			<form id="leadForm">
+				<input type="text" name="name" placeholder="Nombre" required />
+				<div class="error-message" id="nameError"></div>
+
+				<input type="text" name="lastname" placeholder="Apellido" required />
+				<div class="error-message" id="lastnameError"></div>
+
+				<input
+					type="email"
+					name="email"
+					placeholder="Correo electrónico"
+					required
+				/>
+				<div class="error-message" id="emailError"></div>
+
+				<input
+					type="text"
+					name="phone"
+					id="phone"
+					placeholder="Teléfono"
+					required
+				/>
+				<div class="error-message" id="phoneError"></div>
+
+				<!-- Honeypot -->
+				<input type="text" name="company" style="display: none" />
+
+				<button type="submit">REGISTRARSE</button>
+			</form>
+
+			<div class="success" id="successMsg"></div>
+		</div>
+
+		<script>
+			const form = document.getElementById("leadForm");
+
+			// Phone mask
+			const phoneInput = document.getElementById("phone");
+			phoneInput.addEventListener("input", function () {
+				let value = this.value.replace(/\D/g, "");
+				if (value.startsWith("0")) value = "38" + value;
+				this.value = "+" + value.substring(0, 12);
+			});
+
+			form.addEventListener("submit", function (e) {
+				e.preventDefault();
+
+				let valid = true;
+
+				const name = form.name.value.trim();
+				const lastname = form.lastname.value.trim();
+				const email = form.email.value.trim();
+				const phone = form.phone.value.trim();
+
+				document
+					.querySelectorAll(".error-message")
+					.forEach((el) => (el.textContent = ""));
+
+				if (name.length < 2) {
+					document.getElementById("nameError").textContent = "Введіть ім'я";
+					valid = false;
+				}
+
+				if (lastname.length < 2) {
+					document.getElementById("lastnameError").textContent =
+						"Введіть прізвище";
+					valid = false;
+				}
+
+				if (!/^\S+@\S+\.\S+$/.test(email)) {
+					document.getElementById("emailError").textContent = "Невірний email";
+					valid = false;
+				}
+
+				if (phone.length < 10) {
+					document.getElementById("phoneError").textContent = "Невірний номер";
+					valid = false;
+				}
+
+				if (!valid) return;
+
+				const formData = new FormData(form);
+
+				fetch("./send.php", {
+					method: "POST",
+					body: formData,
+				})
+					.then(async (res) => {
+						const data = await res.json().catch(() => ({}));
+						if (!res.ok) {
+							throw new Error(data.message || "Server error");
+						}
+
+						return data;
+					})
+					.then((data) => {
+						if (data.success) {
+							form.style.display = "none";
+							window.location.href = "thank-you.html";
+							return;
+						}
+
+						throw new Error(data.message || "Submission failed");
+					})
+					.catch((error) => {
+						console.log("Submission error:", error);
+						alert(error.message || "Немає з'єднання з сервером");
+					});
+			});
+		</script>
+	</body>
+</html>
