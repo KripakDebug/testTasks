@@ -1,4 +1,5 @@
-[providers.php]
+[config]
+providers = ["php"]
 
 [processes.web]
 cmd = "caddy run --config /app/Caddyfile"
