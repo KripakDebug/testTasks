@@ -58,6 +58,18 @@
 				background: #666;
 			}
 
+			button:disabled {
+				background: #aaa;
+				cursor: not-allowed;
+			}
+
+			.submit-error {
+				color: red;
+				font-size: 14px;
+				margin-top: 10px;
+				text-align: center;
+			}
+
 			.success {
 				text-align: center;
 				color: green;
@@ -100,7 +112,8 @@
 				<!-- Honeypot -->
 				<input type="text" name="company" style="display: none" />
 
-				<button type="submit">REGISTRARSE</button>
+				<button type="submit" id="submitBtn">REGISTRARSE</button>
+				<div class="submit-error" id="submitError"></div>
 			</form>
 
 			<div class="success" id="successMsg"></div>
@@ -108,6 +121,8 @@
 
 		<script>
 			const form = document.getElementById("leadForm");
+			const submitBtn = document.getElementById("submitBtn");
+			const submitError = document.getElementById("submitError");
 
 			// Phone mask
 			const phoneInput = document.getElementById("phone");
@@ -130,6 +145,7 @@
 				document
 					.querySelectorAll(".error-message")
 					.forEach((el) => (el.textContent = ""));
+				submitError.textContent = "";
 
 				if (name.length < 2) {
 					document.getElementById("nameError").textContent = "Введіть ім'я";
@@ -156,26 +172,36 @@
 
 				const formData = new FormData(form);
 
-				fetch("https://testtasks-production.up.railway.app/send.php", {
+				submitBtn.disabled = true;
+				submitBtn.textContent = "ВІДПРАВКА...";
+
+				fetch("/send.php", {
 					method: "POST",
 					body: formData,
 				})
 					.then((res) => {
-						console.log(res);
-						
-						return res.json()
+						return res.json().then((data) => ({ status: res.status, data }));
 					})
-					.then((data) => {
-						console.log(data);
-						
+					.then(({ status, data }) => {
 						if (data.success) {
 							form.style.display = "none";
 							window.location.href = "thank-you.html";
+						} else {
+							const msg =
+								data.error ||
+								(status >= 500
+									? "Помилка сервера. Спробуйте пізніше."
+									: "Не вдалося відправити форму. Перевірте дані.");
+							submitError.textContent = msg;
+							submitBtn.disabled = false;
+							submitBtn.textContent = "REGISTRARSE";
 						}
 					})
 					.catch((error) => {
-						console.log("Network error:", error);
-						alert("Немає з'єднання з сервером");
+						console.error("Network error:", error);
+						submitError.textContent = "Немає з'єднання з сервером. Спробуйте пізніше.";
+						submitBtn.disabled = false;
+						submitBtn.textContent = "REGISTRARSE";
 					});
 			});
 		</script>
